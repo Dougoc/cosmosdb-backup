@@ -16,13 +16,10 @@ def cli():
 @cli.command()
 def backup(host: str, key: str, database: str, container: str):
     """A CLI wrapper for backup CosmosDB"""
-    url = host
-    key = key
-    client = CosmosClient(url, credential=key)
-    database_name = database
-    database = client.get_database_client(database_name)
+    client = CosmosClient(host, credential=key)
+    db = client.get_database_client(database)
     container_name = container
-    container = database.get_container_client(container_name)
+    container = db.get_container_client(container_name)
     entrances = []
     for item in container.query_items(
             query='SELECT * FROM account',
@@ -52,21 +49,18 @@ def _write_backup(content):
 @cli.command()
 def restore(host: str, key: str, database: str, container: str, file: str):
     """A CLI wrapper for Restore cosmosDB"""
-    url = host
-    key = key
-    client = CosmosClient(url, credential=key)
-    database_name = database
+    client = CosmosClient(host, credential=key)
     container_name = container
 
     try:
-        database = client.create_database(database_name)
+        db = client.create_database(database)
     except exceptions.CosmosResourceExistsError:
-        database = client.get_database_client(database_name)
+        db = client.get_database_client(database)
 
     try:
-        container = database.create_container(id=container_name, partition_key=PartitionKey(path="/productName"))
+        container = db.create_container(id=container_name, partition_key=PartitionKey(path="/productName"))
     except exceptions.CosmosResourceExistsError:
-        container = database.get_container_client(container_name)
+        container = db.get_container_client(container_name)
     except exceptions.CosmosHttpResponseError:
         raise
 
@@ -75,7 +69,6 @@ def restore(host: str, key: str, database: str, container: str, file: str):
         full_backup = json.loads(content.read())
         for item in full_backup:
             print(f'Write item {item}')
-            #print(json.dumps(item, indent=4))
             container.upsert_item(item)
 
     print('Restore finished')
