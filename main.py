@@ -18,10 +18,9 @@ def backup(host: str, key: str, database: str, container: str):
     """A CLI wrapper for backup CosmosDB"""
     client = CosmosClient(host, credential=key)
     db = client.get_database_client(database)
-    container_name = container
-    container = db.get_container_client(container_name)
+    ct = db.get_container_client(container)
     entrances = []
-    for item in container.query_items(
+    for item in ct.query_items(
             query='SELECT * FROM account',
             enable_cross_partition_query=True):
         entrances.append(item)
@@ -50,7 +49,6 @@ def _write_backup(content):
 def restore(host: str, key: str, database: str, container: str, file: str):
     """A CLI wrapper for Restore cosmosDB"""
     client = CosmosClient(host, credential=key)
-    container_name = container
 
     try:
         db = client.create_database(database)
@@ -58,9 +56,9 @@ def restore(host: str, key: str, database: str, container: str, file: str):
         db = client.get_database_client(database)
 
     try:
-        container = db.create_container(id=container_name, partition_key=PartitionKey(path="/productName"))
+        ct = db.create_container(id=container, partition_key=PartitionKey(path="/productName"))
     except exceptions.CosmosResourceExistsError:
-        container = db.get_container_client(container_name)
+        ct = db.get_container_client(container)
     except exceptions.CosmosHttpResponseError:
         raise
 
@@ -69,7 +67,7 @@ def restore(host: str, key: str, database: str, container: str, file: str):
         full_backup = json.loads(content.read())
         for item in full_backup:
             print(f'Write item {item}')
-            container.upsert_item(item)
+            ct.upsert_item(item)
 
     print('Restore finished')
 
