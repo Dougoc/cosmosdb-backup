@@ -9,10 +9,10 @@ def cli():
     """A CLI wrapper for architecturing map"""
 
 
-@click.option('--container', help='List of endpoints')
-@click.option('--database', help='List of endpoints')
-@click.option('--key', help='List of endpoints')
-@click.option('--host', help='List of endpoints')
+@click.option('--container', help='CosmosDB Container name')
+@click.option('--database', help='CosmosDB Database name')
+@click.option('--key', help='CosmosDB Key')
+@click.option('--host', help='CosmosDB Host')
 @cli.command()
 def backup(host: str, key: str, database: str, container: str):
     """A CLI wrapper for backup CosmosDB"""
@@ -83,4 +83,5 @@ def restore(host: str, key: str, database: str, container: str, file: str):
 
 if __name__ == '__main__':
     cli()
-# commands = click.CommandCollection(sources=[cli])
+
+commands = click.CommandCollection(sources=[cli])
